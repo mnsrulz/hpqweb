@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import 'instantsearch.css/themes/algolia.css';
+// import 'instantsearch.css/themes/algolia.css';
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })

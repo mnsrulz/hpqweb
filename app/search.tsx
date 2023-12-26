@@ -7,8 +7,8 @@ import kydefault from 'ky';
 // import 'instantsearch.css/themes/algolia.css';
 import { MenuSelect } from './MenuList';
 import { RangeSlider } from './RangeSlider';
-import dayjs from "dayjs";
 import { SearchClient } from 'algoliasearch';
+import { Hit, CustomHitType } from './hit'
 
 //import 'instantsearch.css/themes/algolia.css';
 const ky = kydefault.extend({
@@ -87,42 +87,6 @@ const companyFacets = async (requests?: any) => {
     }
     return data || [];
 }
-declare type CustomHitType = { jobTitle: string, 
-    employerName: string, 
-    objectID: string, 
-    payRangeStart: number, receivedDate: Date ,
-    worksiteZip: string,
-    worksiteState: string,
-    payRangeEnd?: number
-}
-const numberFormatter = new Intl.NumberFormat('en', {
-    notation: 'compact',
-    style: "currency",
-    currency: 'USD'
-})
-function Hit({ hit }: { hit: CustomHitType }) {
-    const payRange = numberFormatter.formatRange(hit.payRangeStart, hit.payRangeEnd || hit.payRangeStart);
-    // <Card href="#" className="max-w-sm">
-    return <div className="">
-        <div className="min-w-0 flex-1">
-            <p title={hit.employerName} className="truncate text-sm font-medium text-gray-900 dark:text-white">{hit.employerName}</p>
-            <p title={hit.jobTitle} className="truncate text-sm text-gray-500 dark:text-gray-400">{hit.jobTitle}</p>
-            <p className="items-center text-sm font-semibold text-gray-900 dark:text-white mt-2">
-                {payRange}
-            </p>
-            <div className='flex truncate text-sm text-gray-400 dark:text-gray-400'>
-                <p>{hit.worksiteState} {hit.worksiteZip}</p>
-                <p className='flex'>{dayjs(hit.receivedDate).format("d MMM YYYY")}</p>
-            </div>
-        </div>
-    </div>
-    // </Card>
-    // return <span>
-    //     <span>{hit.employerName} -- {hit.jobTitle}, </span>
-    //     <span>{numberFormatter.format(hit.payRangeStart)} -- {dayjs(hit.receivedDate).format("d MMM YYYY")}</span>
-    // </span>
-}
-
 
 const sc = {
     async search(requests: any[]) {
@@ -230,9 +194,8 @@ const sc = {
 
 export const Search = () => {
     return <InstantSearch searchClient={sc as unknown as SearchClient} indexName="YourIndexName">
-        <div className='search-panel h-full min-h-svh'>
-            <div className="search-panel__filters fixed inset-0 z-50 h-full w-64 flex-none border-r border-gray-200 dark:border-gray-600 lg:static lg:block lg:h-auto lg:overflow-y-visible 
-            lg:pt-6 hidden">
+        <div className='search-panel h-full min-h-svh flex'>
+            <div className="search-panel__filters fixed inset-0 z-50 h-full w-64 flex-none border-r border-gray-200 dark:border-gray-600 lg:static lg:block lg:h-auto lg:overflow-y-visible lg:pt-6 hidden">
                 <div className='overflow-y-auto px-4 h-full
                         scrolling-touch max-w-2xs  lg:block dark:bg-gray-900 
                         lg:mr-0 lg:sticky font-normal text-base lg:text-sm'>
@@ -259,27 +222,44 @@ export const Search = () => {
                     <MenuSelect attribute='RECEIVED_DATE_YEAR'></MenuSelect>
                 </div>
             </div>
-            <div className="search-panel__results w-full min-w-0 pr-5 lg:pt-6">
-                <CurrentRefinements></CurrentRefinements>
+            <div className="search-panel__results w-full min-w-0 ml-2 pr-5 lg:pt-6">
+                <CurrentRefinements classNames={{
+                    categoryLabel: 'm-1',
+                    item: 'rounded-md bg-indigo-900 text-white text-sm p-1 m-1 inline-flex',
+                }}></CurrentRefinements>
 
                 {/* <SearchBox></SearchBox> */}
                 <Hits hitComponent={Hit} classNames={{
                     root: 'py-5',
-                    list: '',
-                    item: 'p-2 m-1'
+                    list: 'grid gap-1 grid-cols-4 flex',
+                    item: ' border-solid border-2 border-gray-300 rounded-md p-2'
                 }} />
-                <HitsPerPage items={[{
-                    label: '12',
-                    value: 12,
-                    default: true
-                }, {
-                    label: '16',
-                    value: 16,
-                    default: false
-                }]}></HitsPerPage>
-                <Stats></Stats>
-                <Pagination ></Pagination>
+                <div className='flex justify-between'>
+                    <Stats classNames={{
+                        root: 'text-sm'
+                    }}></Stats>
+                    <HitsPerPage items={[{
+                        label: '12',
+                        value: 12,
+                        default: true
+                    }, {
+                        label: '16',
+                        value: 16,
+                        default: false
+                    }]} classNames={{
+                        root: '',
+                        select: 'bg-gray-50 border border-gray-300 text-gray-900 mb-6 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500'
+                    }}></HitsPerPage>
 
+                    <Pagination classNames={{
+                        root: 'Page navigation example',
+                        list: 'inline-flex -space-x-px text-sm',
+                        item: 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white',
+                        pageItem: '',
+                        selectedItem: 'bg-blue-50 hover:bg-blue-100 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-700 dark:text-white',
+                        link: 'flex items-center justify-center px-3 h-8 leading-tight '
+                    }}></Pagination>
+                </div>
             </div>
             {/* <RangeInput attribute='salary' min={50000} max={500000}></RangeInput> */}
         </div>

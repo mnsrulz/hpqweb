@@ -19,7 +19,6 @@
 // }
 // export default config
 
-
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
