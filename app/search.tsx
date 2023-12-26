@@ -8,7 +8,7 @@ import 'instantsearch.css/themes/algolia.css';
 import { MenuSelect } from './MenuList';
 import { RangeSlider } from './RangeSlider';
 import dayjs from "dayjs";
-import { Card } from 'flowbite-react';
+import { SearchClient } from 'algoliasearch';
 
 //import 'instantsearch.css/themes/algolia.css';
 const ky = kydefault.extend({
@@ -32,10 +32,33 @@ let facetMaps: Record<string, {
     count: number;
 }[]> = {};
 let companyFacetsAbortController: AbortController | null;
+const parseFacetFilters = (facetFilters: [string[]]) => {
+    const v = facetFilters.map(j => j.map(x => `${x.split(':')[0]}='${x.split(':')[1]}'`).join(' OR ')).map(j => `(${j})`).join(' AND ')
+    return v ? `AND (${v})` : ''
+}
+
+const parseNumericFilters = (numericFilters: string[]) => {
+    const v = numericFilters.join(' and ');
+    return v ? `AND (${v})` : '';
+}
+
 const companyFacets = async (requests?: any) => {
     const q = requests && requests[0].params.facetQuery;
-    const numericFilters = requests && requests[0].params.numericFilters?.join(' and ') || '1=1';
-    const filter = requests && requests[0].params.facetFilters?.map(j => j.map(x => `${x.split(':')[0]}='${x.split(':')[1]}'`).join(' OR ')).map(j => `(${j})`).join(' AND ') || '1=1'
+    // const numericFilters = requests && requests[0].params.numericFilters?.join(' and ') || '1=1';
+    // const filter = requests && requests[0].params.facetFilters?.map(j => j.map(x => `${x.split(':')[0]}='${x.split(':')[1]}'`).join(' OR ')).map(j => `(${j})`).join(' AND ') || '1=1'
+    const params = requests && requests[0].params;
+    //if (!params) throw new Error('invalid params');
+
+    let numericFilters = '';
+    if (params?.numericFilters && Array.isArray(params.numericFilters)) {
+        numericFilters = parseNumericFilters(params.numericFilters);
+    }
+
+    let filter = ''
+    if (params?.facetFilters && Array.isArray(params.facetFilters)) {
+        const f = params.facetFilters as [string[]];
+        filter = parseFacetFilters(f);
+    }
 
     console.log(`calling company facets with q: ${q}`);
     companyFacetsAbortController?.abort();
@@ -48,8 +71,8 @@ const companyFacets = async (requests?: any) => {
                     FROM 'db.parquet'
                     WHERE 1=1
                     ${facetQuery || ''}
-                    AND (${numericFilters})
-                    AND (${filter})
+                    ${numericFilters}
+                    ${filter}
                 ) T1
                 GROUP BY EMPLOYER_NAME
                 --ORDER BY Count DESC
@@ -94,13 +117,27 @@ function Hit({ hit }: { hit: CustomHitType }) {
     // </span>
 }
 
+
 const sc = {
-    async search(requests: any) {
-        const q = requests[0].params.query || 'facebook';
-        const numericFilters = requests[0].params.numericFilters?.join(' and ') || '1=1';
-        const filter = requests[0].params.facetFilters?.map(j => j.map(x => `${x.split(':')[0]}='${x.split(':')[1]}'`).join(' OR ')).map(j => `(${j})`).join(' AND ') || '1=1'
-        const perPage = requests[0].params.hitsPerPage || 12;
-        const offset = (requests[0].params.page || 0) * perPage;
+    async search(requests: any[]) {
+        const { params } = requests[0];
+
+        if (!params) throw new Error('invalid params');
+
+        const q = params.query || 'facebook';
+        let numericFilters = '';
+        if (params.numericFilters && Array.isArray(params.numericFilters)) {
+            numericFilters = parseNumericFilters(params.numericFilters);
+        }
+
+        let filter = ''
+        if (params.facetFilters && Array.isArray(params.facetFilters)) {
+            const f = params.facetFilters as [string[]];
+            filter = parseFacetFilters(f);
+        }
+
+        const perPage = params.hitsPerPage || 12;
+        const offset = (params.page || 0) * perPage;
         const baseQuery = `SELECT JOB_TITLE AS jobTitle, EMPLOYER_NAME as employerName, 
                             CASE_NUMBER AS objectID, year(RECEIVED_DATE) AS YEAR_OF_PROCESSING,
                             WAGE_RATE_OF_PAY_FROM AS payRangeStart, CAST(RECEIVED_DATE AS DATE) AS receivedDate
@@ -108,8 +145,8 @@ const sc = {
                             WHERE 1=1
                             --AND (EMPLOYER_NAME ILIKE '%${q}%' OR JOB_TITLE ILIKE '%${q}%')
                             --AND RECEIVED_DATE > (current_date - 180)
-                            AND (${numericFilters})
-                            AND (${filter})
+                            ${numericFilters}
+                            ${filter}
                             `;
         const resultsQuery = `${baseQuery} 
                                 LIMIT ${perPage} OFFSET ${offset}`;
@@ -157,7 +194,7 @@ const sc = {
         }
     },
     async searchForFacetValues(requests: any) {
-        const { facetName, facetQuery } = requests[0].params;
+        const { facetName } = requests[0].params;
         let data: { value: string, count: number }[] = [];
 
         switch (facetName) {
@@ -168,7 +205,7 @@ const sc = {
                 data = await yearFacets()
                 break;
             default:
-                return;
+                throw new Error('invalid facet name');
         }
 
         return {
@@ -182,9 +219,8 @@ const sc = {
     }
 };
 
-
 export const Search = () => {
-    return <InstantSearch searchClient={sc} indexName="YourIndexName">
+    return <InstantSearch searchClient={sc as unknown as SearchClient} indexName="YourIndexName">
         <div className='search-panel h-full min-h-svh'>
             <div className="search-panel__filters fixed inset-0 z-50 h-full w-64 flex-none border-r border-gray-200 dark:border-gray-600 lg:static lg:block lg:h-auto lg:overflow-y-visible 
             lg:pt-6 hidden">
