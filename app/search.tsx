@@ -4,7 +4,7 @@ import {
     useMenu, Pagination, SortBy, Stats, HitsPerPage
 } from 'react-instantsearch';
 import kydefault from 'ky';
-import 'instantsearch.css/themes/algolia.css';
+// import 'instantsearch.css/themes/algolia.css';
 import { MenuSelect } from './MenuList';
 import { RangeSlider } from './RangeSlider';
 import dayjs from "dayjs";
@@ -20,8 +20,8 @@ const ky = kydefault.extend({
     }
 });
 const yearFacets = async () => {
-    const s = `SELECT year(RECEIVED_DATE) AS value, COUNT(1) AS count FROM 'db.parquet'
-                GROUP BY year(RECEIVED_DATE)
+    const s = `SELECT RECEIVED_DATE_YEAR AS value, COUNT(1) AS count FROM 'db.parquet'
+                GROUP BY RECEIVED_DATE_YEAR
                 ORDER BY value`;
     const data = await ky(`https://duckdbedge.netlify.app/raw?q=${encodeURIComponent(s)}`).json<{ value: string; count: number; }[]>();
     facetMaps['timeframe'] = data;
@@ -67,7 +67,7 @@ const companyFacets = async (requests?: any) => {
     let errored = false;
     const s = `SELECT EMPLOYER_NAME AS value, COUNT(1) AS count FROM 
                 (
-                    SELECT *, year(RECEIVED_DATE) AS YEAR_OF_PROCESSING 
+                    SELECT *
                     FROM 'db.parquet'
                     WHERE 1=1
                     ${facetQuery || ''}
@@ -87,27 +87,33 @@ const companyFacets = async (requests?: any) => {
     }
     return data || [];
 }
-declare type CustomHitType = { jobTitle: string, employerName: string, objectID: string, payRangeStart: number, receivedDate: Date }
-const numberFormatter = new Intl.NumberFormat()
+declare type CustomHitType = { jobTitle: string, 
+    employerName: string, 
+    objectID: string, 
+    payRangeStart: number, receivedDate: Date ,
+    worksiteZip: string,
+    worksiteState: string,
+    payRangeEnd?: number
+}
+const numberFormatter = new Intl.NumberFormat('en', {
+    notation: 'compact',
+    style: "currency",
+    currency: 'USD'
+})
 function Hit({ hit }: { hit: CustomHitType }) {
+    const payRange = numberFormatter.formatRange(hit.payRangeStart, hit.payRangeEnd || hit.payRangeStart);
     // <Card href="#" className="max-w-sm">
     return <div className="">
-        {/* <div className="shrink-0">
-                <Image
-                    alt="Neil image"
-                    height="32"
-                    src="/images/people/profile-picture-1.jpg"
-                    width="32"
-                    className="rounded-full"
-                />
-            </div> */}
         <div className="min-w-0 flex-1">
             <p title={hit.employerName} className="truncate text-sm font-medium text-gray-900 dark:text-white">{hit.employerName}</p>
             <p title={hit.jobTitle} className="truncate text-sm text-gray-500 dark:text-gray-400">{hit.jobTitle}</p>
-            <p className="inline-flex items-center text-base font-semibold text-gray-900 dark:text-white mt-2">
-                ${numberFormatter.format(Math.floor(hit.payRangeStart))}
+            <p className="items-center text-sm font-semibold text-gray-900 dark:text-white mt-2">
+                {payRange}
             </p>
-            <p className="truncate float-right text-sm text-gray-500 dark:text-gray-400 mt-2">{dayjs(hit.receivedDate).format("d MMM YYYY")}</p>
+            <div className='flex truncate text-sm text-gray-400 dark:text-gray-400'>
+                <p>{hit.worksiteState} {hit.worksiteZip}</p>
+                <p className='flex'>{dayjs(hit.receivedDate).format("d MMM YYYY")}</p>
+            </div>
         </div>
     </div>
     // </Card>
@@ -139,8 +145,11 @@ const sc = {
         const perPage = params.hitsPerPage || 12;
         const offset = (params.page || 0) * perPage;
         const baseQuery = `SELECT JOB_TITLE AS jobTitle, EMPLOYER_NAME as employerName, 
-                            CASE_NUMBER AS objectID, year(RECEIVED_DATE) AS YEAR_OF_PROCESSING,
-                            WAGE_RATE_OF_PAY_FROM AS payRangeStart, CAST(RECEIVED_DATE AS DATE) AS receivedDate
+                            CASE_NUMBER AS objectID, RECEIVED_DATE_YEAR,
+                            WAGE_RATE_OF_PAY_FROM AS payRangeStart, 
+                            WAGE_RATE_OF_PAY_TO AS payRangeEnd, 
+                            CAST(RECEIVED_DATE AS DATE) AS receivedDate,
+                            WORKSITE_STATE AS worksiteState, WORKSITE_POSTAL_CODE as worksiteZip
                             FROM 'db.parquet'
                             WHERE 1=1
                             --AND (EMPLOYER_NAME ILIKE '%${q}%' OR JOB_TITLE ILIKE '%${q}%')
@@ -168,7 +177,7 @@ const sc = {
                 {
                     "facets": {
                         "EMPLOYER_NAME": Object.assign({}, ...companyFacetMaps?.map(({ value, count }) => ({ [value]: count })) || [{}]),
-                        "YEAR_OF_PROCESSING": Object.assign({}, ...timeFrameFacetMaps?.map(({ value, count }) => ({ [value]: count })) || [{}])
+                        "RECEIVED_DATE_YEAR": Object.assign({}, ...timeFrameFacetMaps?.map(({ value, count }) => ({ [value]: count })) || [{}])
                     },
                     "facets01": [
                         {
@@ -201,7 +210,7 @@ const sc = {
             case 'EMPLOYER_NAME':
                 data = await companyFacets(requests);
                 break;
-            case 'YEAR_OF_PROCESSING':
+            case 'RECEIVED_DATE_YEAR':
                 data = await yearFacets()
                 break;
             default:
@@ -230,7 +239,7 @@ export const Search = () => {
 
                     <SortBy items={[{
                         label: 'Received Date',
-                        value: 'RECEIVED_DATE'
+                        value: 'RECEIVED_DATE_YEAR'
                     }, {
                         label: 'Pay Start',
                         value: 'WAGE_RATE_OF_PAY_FROM'
@@ -247,7 +256,7 @@ export const Search = () => {
                         <div style={{ margin: "10px 0px" }}>Salary:</div>
                         <RangeSlider min={10000} max={1000000} attribute="WAGE_RATE_OF_PAY_FROM" />
                     </div>
-                    <MenuSelect attribute='YEAR_OF_PROCESSING'></MenuSelect>
+                    <MenuSelect attribute='RECEIVED_DATE_YEAR'></MenuSelect>
                 </div>
             </div>
             <div className="search-panel__results w-full min-w-0 pr-5 lg:pt-6">
@@ -257,7 +266,7 @@ export const Search = () => {
                 <Hits hitComponent={Hit} classNames={{
                     root: 'py-5',
                     list: '',
-                    item: 'p-1'
+                    item: 'p-2 m-1'
                 }} />
                 <HitsPerPage items={[{
                     label: '12',
