@@ -196,7 +196,7 @@ export const Search = () => {
     return <InstantSearch searchClient={sc as unknown as SearchClient} indexName="YourIndexName">
         <div className='flex flex-no-wrap'>
             <div className="search-panel__filters w-64 absolute sm:relative bg-white-800 shadow md:h-full flex-col justify-between hidden sm:flex">
-                <button aria-label="toggle sidebar" id="openSideBar" className="h-10 w-10 bg-gray-800 absolute right-0 mt-0 -mr-10 flex items-center shadow rounded-tr rounded-br justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 rounded focus:ring-gray-800" onClick={()=>{
+                {/* <button aria-label="toggle sidebar" id="openSideBar" className="h-10 w-10 bg-gray-800 absolute right-0 mt-0 -mr-10 flex items-center shadow rounded-tr rounded-br justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 rounded focus:ring-gray-800" onClick={()=>{
                     document.querySelector('.search-panel__filters').style.transform = "translateX(0px)";
                     document.querySelector('#openSideBar').classList.add("hidden");
                     document.querySelector('#closeSideBar').classList.remove("hidden");
@@ -224,7 +224,7 @@ export const Search = () => {
                         <line x1="18" y1="6" x2="6" y2="18" />
                         <line x1="6" y1="6" x2="18" y2="18" />
                     </svg>
-                </button>
+                </button> */}
                 <div className='px-2 md:px-4 lg:px-4'>
                     {/* <div className="h-16 w-full flex items-center">
                         <svg aria-label="Ripples. Logo" role="img" xmlns="http://www.w3.org/2000/svg" width="144" height="30" viewBox="0 0 144 30">

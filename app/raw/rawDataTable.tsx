@@ -9,14 +9,14 @@ export const RawDataTable = ({ data }: { data: any[] }) => {
         <TableHead>
             <TableRow>
                 {
-                    Object.keys(data[0]).map(h => (<TableHeaderCell>{h}</TableHeaderCell>))
+                    Object.keys(data[0]).map(h => (<TableHeaderCell key={h}>{h}</TableHeaderCell>))
                 }
             </TableRow>
         </TableHead>
         <TableBody>
             {data.map((item) => (
                 <TableRow key={item}>
-                    {Object.keys(item).map(h => (<TableCell>{item[h]}</TableCell>))}
+                    {Object.keys(item).map(h => (<TableCell key={h}>{item[h]}</TableCell>))}
                 </TableRow>
             ))}
         </TableBody>
