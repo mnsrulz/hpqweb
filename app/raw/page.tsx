@@ -52,11 +52,12 @@ export default function Raw() {
         setTabs([...tabs, `Tab-${counter + 1}`]);
         setCounter(counter + 1);
     }
+                
     return <div className="pl-4 pr-4">
+        <Button variant="light" onClick={onTabAdd}>New tab</Button>
         <TabGroup >
             <TabList>
                 {tabs.map(j => (<Tab key={j}>{j}</Tab>))}
-                <Button variant="light" onClick={onTabAdd}>+</Button>
             </TabList>
             <TabPanels>
                 {tabs.map(j => (<TabPanel key={j}>
