@@ -1,11 +1,19 @@
 'use client'
-import { Button, Card, Textarea, Divider } from "@tremor/react";
+import {
+    Button, Card, Textarea, Divider,
+    Tab,
+    TabGroup,
+    TabList,
+    TabPanel,
+    TabPanels,
+} from "@tremor/react";
 import { useState } from "react";
 import { query } from '../lib/db'
 import { RawDataTable } from "./rawDataTable";
 const defaultQuery = `SELECT * FROM 'db.parquet'
 LIMIT 10`;
-export default function Raw() {
+
+const RawTab = () => {
     const [value, setValue] = useState(defaultQuery);
     const [data, setData] = useState([] as any[]);
     const onSubmitQuery = async (e: any) => {
@@ -34,4 +42,27 @@ export default function Raw() {
         <Divider />
         <RawDataTable data={data}></RawDataTable>
     </Card>
+}
+
+export default function Raw() {
+    const [counter, setCounter] = useState(0);
+    const [tabs, setTabs] = useState(['tab1'])
+    const onTabAdd = () => {
+        //tabs.push(`Tab-${counter + 1}`);
+        setTabs([...tabs, `Tab-${counter + 1}`]);
+        setCounter(counter + 1);
+    }
+    return <div className="pl-4 pr-4">
+        <TabGroup >
+            <TabList>
+                {tabs.map(j => (<Tab key={j}>{j}</Tab>))}
+                <Button variant="light" onClick={onTabAdd}>+</Button>
+            </TabList>
+            <TabPanels>
+                {tabs.map(j => (<TabPanel key={j}>
+                    <RawTab />
+                </TabPanel>))}
+            </TabPanels>
+        </TabGroup>
+    </div>
 }

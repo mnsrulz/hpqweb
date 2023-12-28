@@ -1,4 +1,6 @@
 import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from "@tremor/react";
+const isObject = (item: any) =>
+    (typeof item === "object" && !Array.isArray(item) && item !== null);
 
 export const RawDataTable = ({ data }: { data: any[] }) => {
     if (!data || data.length <= 0) {
@@ -16,7 +18,7 @@ export const RawDataTable = ({ data }: { data: any[] }) => {
         <TableBody>
             {data.map((item) => (
                 <TableRow key={item}>
-                    {Object.keys(item).map(h => (<TableCell key={h}>{item[h]}</TableCell>))}
+                    {Object.keys(item).map(h => (<TableCell key={h}>{isObject(item[h]) ? JSON.stringify(item[h]): item[h]}</TableCell>))}
                 </TableRow>
             ))}
         </TableBody>
