@@ -5,10 +5,13 @@ import {
 } from 'react-instantsearch';
 import kydefault from 'ky';
 // import 'instantsearch.css/themes/algolia.css';
-import { MenuSelect } from './MenuList';
-import { RangeSlider } from './RangeSlider';
+import { MenuSelect } from '../MenuList';
+import { RangeSlider } from '../RangeSlider';
 import { SearchClient } from 'algoliasearch';
-import { Hit, CustomHitType } from './hit'
+import { Hit, CustomHitType } from '../hit'
+import { query } from '../lib/db'
+import './search.css';
+
 
 //import 'instantsearch.css/themes/algolia.css';
 const ky = kydefault.extend({
@@ -31,9 +34,8 @@ let facetMaps: Record<string, {
     value: string;
     count: number;
 }[]> = {};
-let companyFacetsAbortController: AbortController | null;
 const parseFacetFilters = (facetFilters: [string[]]) => {
-    const v = facetFilters.map(j => j.map(x => `${x.split(':')[0]}='${x.split(':')[1]}'`).join(' OR ')).map(j => `(${j})`).join(' AND ')
+    const v = facetFilters.map(j => j.map(x => `${x.split(':')[0]}='${x.split(':')[1]}'`).join(' OR ')).map(j => j && `(${j})`).join(' AND ')
     return v ? `AND (${v})` : ''
 }
 
@@ -42,49 +44,46 @@ const parseNumericFilters = (numericFilters: string[]) => {
     return v ? `AND (${v})` : '';
 }
 
-const companyFacets = async (requests?: any) => {
-    const q = requests && requests[0].params.facetQuery;
-    // const numericFilters = requests && requests[0].params.numericFilters?.join(' and ') || '1=1';
-    // const filter = requests && requests[0].params.facetFilters?.map(j => j.map(x => `${x.split(':')[0]}='${x.split(':')[1]}'`).join(' OR ')).map(j => `(${j})`).join(' AND ') || '1=1'
-    const params = requests && requests[0].params;
-    //if (!params) throw new Error('invalid params');
-
-    let numericFilters = '';
-    if (params?.numericFilters && Array.isArray(params.numericFilters)) {
-        numericFilters = parseNumericFilters(params.numericFilters);
+const facetSearchMethod = async (requests: any, facetName: string) => {
+    //this is when you get from global search //requests.find(r=>r.params.facets == 'EMPLOYER_NAME')
+    //this is when that particular facet is being searched //requests.find(r=>r.params.facetName == 'EMPLOYER_NAME')
+    const facetRequest = requests.find((r: any) => r.params.facetName == facetName || r.params.facets == facetName);
+    let q = '';
+    let facetFilters: [string[]] = [[]];
+    let numericFilters: string[] = [];
+    if (facetRequest) {
+        facetFilters = facetRequest.params.facetFilters;
+        numericFilters = facetRequest.params.numericFilters;
+        q = facetRequest.params.facetQuery;
+    } else {
+        facetFilters = requests[0].params.facetFilters;
+        numericFilters = requests[0].params.numericFilters;
     }
 
-    let filter = ''
-    if (params?.facetFilters && Array.isArray(params.facetFilters)) {
-        const f = params.facetFilters as [string[]];
-        filter = parseFacetFilters(f);
+    let numFilters = '', filter = '';
+    if (numericFilters && Array.isArray(numericFilters)) {
+        numFilters = parseNumericFilters(numericFilters);
     }
 
-    console.log(`calling company facets with q: ${q}`);
-    companyFacetsAbortController?.abort();
-    companyFacetsAbortController = new AbortController();
-    const facetQuery = q && `AND EMPLOYER_NAME ILIKE '%${q}%'`
-    let errored = false;
-    const s = `SELECT EMPLOYER_NAME AS value, COUNT(1) AS count FROM 
+    if (facetFilters && Array.isArray(facetFilters)) {
+        filter = parseFacetFilters(facetFilters);
+    }
+
+    const facetQuery = q && `AND ${facetName} ILIKE '%${q}%'`
+    const s = `SELECT ${facetName} AS value, COUNT(1) AS count FROM 
                 (
                     SELECT *
                     FROM 'db.parquet'
                     WHERE 1=1
                     ${facetQuery || ''}
-                    ${numericFilters}
+                    ${numFilters}
                     ${filter}
                 ) T1
-                GROUP BY EMPLOYER_NAME
-                --ORDER BY Count DESC
-                LIMIT 25`;
-    const data = await ky(`https://hpqdata.deno.dev/raw?q=${encodeURIComponent(s)}`, {
-        signal: companyFacetsAbortController.signal
-    }).json<{ value: string; count: number; }[]>()
-        .catch(() => { errored = true });
-    if (!errored) {
-        companyFacetsAbortController = null;
-        data && (facetMaps['company'] = data);
-    }
+                GROUP BY ${facetName}
+                ORDER BY Count DESC
+                LIMIT 10`;
+
+    const data = await query<{ value: string, count: number }>(s);
     return data || [];
 }
 
@@ -94,7 +93,6 @@ const sc = {
 
         if (!params) throw new Error('invalid params');
 
-        const q = params.query || 'facebook';
         let numericFilters = '';
         if (params.numericFilters && Array.isArray(params.numericFilters)) {
             numericFilters = parseNumericFilters(params.numericFilters);
@@ -116,8 +114,6 @@ const sc = {
                             WORKSITE_STATE AS worksiteState, WORKSITE_POSTAL_CODE as worksiteZip
                             FROM 'db.parquet'
                             WHERE 1=1
-                            --AND (EMPLOYER_NAME ILIKE '%${q}%' OR JOB_TITLE ILIKE '%${q}%')
-                            --AND RECEIVED_DATE > (current_date - 180)
                             ${numericFilters}
                             ${filter}
                             `;
@@ -126,14 +122,15 @@ const sc = {
         const countsQuery = `SELECT COUNT(1) counts FROM (
                                 ${baseQuery}
                             ) T`
-        const resp = await ky(`https://hpqdata.deno.dev/raw?q=${encodeURIComponent(resultsQuery)}`)
-            .json<CustomHitType[]>()
 
-        const resp_counts = await ky(`https://hpqdata.deno.dev/raw?q=${encodeURIComponent(countsQuery)}`)
-            .json<{ counts: number }[]>()
+        const resp = await query<CustomHitType>(resultsQuery);
+        const resp_counts = await query<{ counts: number }>(countsQuery);
+
         const totalCount = resp_counts.pop()?.counts || 10;
 
-        const companyFacetMaps = facetMaps['company'] || await companyFacets();
+        const companyFacetMaps = await facetSearchMethod(requests, 'EMPLOYER_NAME');
+        const socTitleFacetMaps = await facetSearchMethod(requests, 'SOC_TITLE');
+        const worksiteStateFacetMaps = await facetSearchMethod(requests, 'WORKSITE_STATE');
         const timeFrameFacetMaps = facetMaps['timeframe'] || await yearFacets();
         //https://github.com/algolia/instantsearch/tree/master/packages/algoliasearch-helper#results-format
         return {
@@ -141,27 +138,16 @@ const sc = {
                 {
                     "facets": {
                         "EMPLOYER_NAME": Object.assign({}, ...companyFacetMaps?.map(({ value, count }) => ({ [value]: count })) || [{}]),
+                        "SOC_TITLE": Object.assign({}, ...socTitleFacetMaps?.map(({ value, count }) => ({ [value]: count })) || [{}]),
+                        "WORKSITE_STATE": Object.assign({}, ...worksiteStateFacetMaps?.map(({ value, count }) => ({ [value]: count })) || [{}]),
                         "RECEIVED_DATE_YEAR": Object.assign({}, ...timeFrameFacetMaps?.map(({ value, count }) => ({ [value]: count })) || [{}])
                     },
-                    "facets01": [
-                        {
-                            "name": 'company',
-                            "data": Object.assign({}, ...companyFacetMaps?.map(({ value, count }) => ({ [value]: count })) || [{}]),
-                            "exhaustive": true
-                        },
-                        {
-                            "name": 'timeframe',
-                            "data": Object.assign({}, ...timeFrameFacetMaps?.map(({ value, count }) => ({ [value]: count })) || [{}]),
-                            "exhaustive": true
-                        }
-                    ],
                     "hits": resp,
                     "page": 0,
                     "nbHits": totalCount,
                     "nbPages": Math.ceil((totalCount / perPage)),
                     "hitsPerPage": perPage,
-                    "processingTimeMS": 1,
-                    "query": q
+                    "processingTimeMS": 1
                 }
             ]
         }
@@ -172,7 +158,9 @@ const sc = {
 
         switch (facetName) {
             case 'EMPLOYER_NAME':
-                data = await companyFacets(requests);
+            case 'SOC_TITLE':
+            case 'WORKSITE_STATE':
+                data = await facetSearchMethod(requests, facetName);
                 break;
             case 'RECEIVED_DATE_YEAR':
                 data = await yearFacets()
@@ -236,31 +224,46 @@ export const Search = () => {
                     </div> */}
 
                     <div className='pt-4 h-full'>
-                        <SortBy items={[{
-                            label: 'Received Date',
-                            value: 'RECEIVED_DATE_YEAR'
-                        }, {
-                            label: 'Pay Start',
-                            value: 'WAGE_RATE_OF_PAY_FROM'
-                        }]}></SortBy>
+                        <MenuSelect attribute='RECEIVED_DATE_YEAR'></MenuSelect>
                         <RefinementList attribute="EMPLOYER_NAME"
                             searchable={true}
                             showMore={true}
                             showMoreLimit={25}
-                            limit={10}
-                            searchablePlaceholder='Search company...' />
+                            limit={5}
+                            searchablePlaceholder='Search company...'
+                            classNames={{
+                                
+                            }} />
+                        <RefinementList attribute="SOC_TITLE"
+                            searchable={true}
+                            showMore={true}
+                            showMoreLimit={25}
+                            limit={5}
+                            searchablePlaceholder='Search job title...' />
+                        <RefinementList attribute="WORKSITE_STATE"
+                            searchable={true}
+                            showMore={true}
+                            showMoreLimit={25}
+                            limit={5}
+                            searchablePlaceholder='Search worksite state...' />
                         <hr></hr>
                         <ToggleRefinement label='Change of Employment?' attribute='CHANGE_EMPLOYER' on={1}></ToggleRefinement>
                         <div style={{ margin: '0px 0px 30px 0' }}>
                             <div style={{ margin: "10px 0px" }}>Salary:</div>
                             <RangeSlider min={10000} max={1000000} attribute="WAGE_RATE_OF_PAY_FROM" />
                         </div>
-                        <MenuSelect attribute='RECEIVED_DATE_YEAR'></MenuSelect>
+                        {/* <SortBy items={[{
+                            label: 'Received Date',
+                            value: 'RECEIVED_DATE_YEAR'
+                        }, {
+                            label: 'Pay Start',
+                            value: 'WAGE_RATE_OF_PAY_FROM'
+                        }]}></SortBy> */}
                     </div>
                 </div>
             </div>
-
-            <div className="search-panel__results container mx-auto py-10 h-64 md:w-4/5 w-11/12 px-6">
+            
+            <div className="search-panel__results container mx-auto h-64 px-4 md:w-4/5 w-11/12 ">
                 <CurrentRefinements classNames={{
                     categoryLabel: 'm-1',
                     item: 'rounded-md bg-indigo-900 text-white text-sm p-1 m-1 inline-flex',
