@@ -61,8 +61,9 @@ count(1) as count
        ), topEmployees as (
         select DISTINCT name 
        From cte 
-       order by count desc 
-       limit 12
+       WHERE count >= 100
+       order by avg_sal desc 
+       limit 15
        ), empList as (
        select name, bucket, avg_sal 
        From cte WHERE name in (select name from topEmployees)
