@@ -10,10 +10,10 @@ const ky = kydefault.extend({
 });
 
 export const query = async <T>(q: string) =>
-    ky(`https://duckdbedge.netlify.app/raw?q=${encodeURIComponent(q)}`).json<T[]>();
+    ky(`https://hpqdata.deno.dev/raw?q=${encodeURIComponent(q)}`).json<T[]>();
 
 const fetcher = async <T>(q: string) =>
-ky(`https://duckdbedge.netlify.app/raw?q=${encodeURIComponent(q)}`).json<T[]>();
+ky(`https://hpqdata.deno.dev/raw?q=${encodeURIComponent(q)}`).json<T[]>();
 
 export const useDbQuery = <T>(q: string) => {
     const { data, error, isLoading } = useSWR<T[]>(q, fetcher);

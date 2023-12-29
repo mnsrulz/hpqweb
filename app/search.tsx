@@ -23,7 +23,7 @@ const yearFacets = async () => {
     const s = `SELECT RECEIVED_DATE_YEAR AS value, COUNT(1) AS count FROM 'db.parquet'
                 GROUP BY RECEIVED_DATE_YEAR
                 ORDER BY value`;
-    const data = await ky(`https://duckdbedge.netlify.app/raw?q=${encodeURIComponent(s)}`).json<{ value: string; count: number; }[]>();
+    const data = await ky(`https://hpqdata.deno.dev/raw?q=${encodeURIComponent(s)}`).json<{ value: string; count: number; }[]>();
     facetMaps['timeframe'] = data;
     return data;
 }
@@ -77,7 +77,7 @@ const companyFacets = async (requests?: any) => {
                 GROUP BY EMPLOYER_NAME
                 --ORDER BY Count DESC
                 LIMIT 25`;
-    const data = await ky(`https://duckdbedge.netlify.app/raw?q=${encodeURIComponent(s)}`, {
+    const data = await ky(`https://hpqdata.deno.dev/raw?q=${encodeURIComponent(s)}`, {
         signal: companyFacetsAbortController.signal
     }).json<{ value: string; count: number; }[]>()
         .catch(() => { errored = true });
@@ -126,10 +126,10 @@ const sc = {
         const countsQuery = `SELECT COUNT(1) counts FROM (
                                 ${baseQuery}
                             ) T`
-        const resp = await ky(`https://duckdbedge.netlify.app/raw?q=${encodeURIComponent(resultsQuery)}`)
+        const resp = await ky(`https://hpqdata.deno.dev/raw?q=${encodeURIComponent(resultsQuery)}`)
             .json<CustomHitType[]>()
 
-        const resp_counts = await ky(`https://duckdbedge.netlify.app/raw?q=${encodeURIComponent(countsQuery)}`)
+        const resp_counts = await ky(`https://hpqdata.deno.dev/raw?q=${encodeURIComponent(countsQuery)}`)
             .json<{ counts: number }[]>()
         const totalCount = resp_counts.pop()?.counts || 10;
 
