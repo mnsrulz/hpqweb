@@ -1,7 +1,7 @@
 'use client'
 import {
-    InstantSearch, SearchBox, Hits, RefinementList, ToggleRefinement, RangeInput, Menu, CurrentRefinements,
-    useMenu, Pagination, SortBy, Stats, HitsPerPage
+    InstantSearch, Hits, RefinementList, ToggleRefinement, CurrentRefinements,
+    Pagination, Stats, HitsPerPage
 } from 'react-instantsearch';
 import kydefault from 'ky';
 // import 'instantsearch.css/themes/algolia.css';
@@ -183,7 +183,7 @@ const sc = {
 export const Search = () => {
     return <InstantSearch searchClient={sc as unknown as SearchClient} indexName="YourIndexName">
         <div className='flex flex-no-wrap'>
-            <div className="search-panel__filters w-64 absolute sm:relative bg-white-800 shadow md:h-full flex-col justify-between hidden sm:flex">
+            <div className="search-panel__filters w-80 absolute sm:relative bg-white-800 shadow md:h-full flex-col justify-between hidden sm:flex">
                 {/* <button aria-label="toggle sidebar" id="openSideBar" className="h-10 w-10 bg-gray-800 absolute right-0 mt-0 -mr-10 flex items-center shadow rounded-tr rounded-br justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 rounded focus:ring-gray-800" onClick={()=>{
                     document.querySelector('.search-panel__filters').style.transform = "translateX(0px)";
                     document.querySelector('#openSideBar').classList.add("hidden");
@@ -232,7 +232,7 @@ export const Search = () => {
                             limit={5}
                             searchablePlaceholder='Search company...'
                             classNames={{
-                                
+
                             }} />
                         <RefinementList attribute="SOC_TITLE"
                             searchable={true}
@@ -246,7 +246,6 @@ export const Search = () => {
                             showMoreLimit={25}
                             limit={5}
                             searchablePlaceholder='Search worksite state...' />
-                        <hr></hr>
                         <ToggleRefinement label='Change of Employment?' attribute='CHANGE_EMPLOYER' on={1}></ToggleRefinement>
                         <div style={{ margin: '0px 0px 30px 0' }}>
                             <div style={{ margin: "10px 0px" }}>Salary:</div>
@@ -262,8 +261,8 @@ export const Search = () => {
                     </div>
                 </div>
             </div>
-            
-            <div className="search-panel__results container mx-auto h-64 px-4 md:w-4/5 w-11/12 ">
+
+            <div className="mx-auto h-64 px-4 md:w-4/5 w-11/12 ">
                 <CurrentRefinements classNames={{
                     categoryLabel: 'm-1',
                     item: 'rounded-md bg-indigo-900 text-white text-sm p-1 m-1 inline-flex',

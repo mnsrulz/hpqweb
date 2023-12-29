@@ -26,7 +26,7 @@
 }
 
 .ais-RefinementList-item .ais-RefinementList-labelText, .ais-ToggleRefinement-label .ais-ToggleRefinement-labelText {
-    @apply ms-2 text-sm font-medium text-gray-400 dark:text-gray-300
+    @apply ms-2 text-sm font-medium text-gray-600 dark:text-gray-300
 }
 
 .ais-RefinementList-item .ais-RefinementList-count {
