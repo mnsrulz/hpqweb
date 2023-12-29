@@ -21,23 +21,13 @@ export const TotalPetitions = ({ range }: BaseParam) => {
     `;
     const { data, error, isLoading } = useDbQuery<{ dt: string; histogram: any }>(q);
 
-    // if (error) return <div>failed to load</div>;
-    // if (isLoading) return <div>loading...</div>;
-
-    let finalData: any[] = useMemo(() => {
-        if (!data) return [];
-        return data.map(item => {
-            const r: any = { dt: item.dt };
-            Object.keys(item.histogram).forEach(k => r[k] = parseInt(item.histogram[k]));
-            return r;
-        });
-    }, [data]);
+    let finalData: any[] = useMemo(() => data?.map(({ dt, histogram }) => ({ dt, ...histogram })) || [], [data]);
     let uniqueAttributes = useMemo(() => [...new Set(data?.map(j => Object.keys(j.histogram)).flat())], [data]);
 
     return <Card>
-        <Title>Total petition counts</Title>
+        <Title>Petitions</Title>
         <Flex className="mt-4">
-            <Text>Partitions</Text>
+            <Text>Total petition counts</Text>
         </Flex>
         <BarChart
             className="mt-4 h-64"

@@ -17,7 +17,7 @@ export default function Page() {
         to: new Date(2023, 11, 31)
     });
 
-    return <Grid numItems={1} numItemsMd={2} numItemsLg={4} className="gap-2 mx-4">
+    return <Grid numItemsMd={1} numItemsLg={4} className="gap-2 mx-4">
         <Col numColSpan={4} className="flex justify-end">
             <DateRangePicker
                 className="max-w-md "
@@ -28,11 +28,14 @@ export default function Page() {
                 {preSelectedDateRanges}
             </DateRangePicker>
         </Col>
-        <Col numColSpan={2}>
+        <Col numColSpanMd={2} >
             <TotalPetitions range={value} />
         </Col>
-        <Col numColSpan={2}>
+        <Col numColSpanMd={2}>
             <CompanyTotalPetitions range={value} />
+        </Col>
+        <Col numColSpan={4}>
+            <CompanyLineChart range={value} />
         </Col>
         <Col numColSpan={4}>
             <CompanyLineAvgSalaryChart range={value} />

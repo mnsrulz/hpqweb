@@ -1,10 +1,10 @@
 'use client';
 import { Card, Title, LineChart } from "@tremor/react";
 import { useDbQuery } from '../lib/db';
-import { BaseParam } from "./common";
+import { BaseParam, usdValueFormatter } from "./common";
 import dayjs from "dayjs";
 
-const valueFormatter = (v: number) => `$ ${new Intl.NumberFormat("us", { currency: 'USD', compactDisplay: 'short', notation: 'compact' }).format(v).toString()}`;
+
 
 export const AvgSalaryByState = ({range}: BaseParam) => {
     const q = `WITH top_states as (
@@ -49,9 +49,10 @@ export const AvgSalaryByState = ({range}: BaseParam) => {
             index="dt"
             categories={uniqueAttributes}
             yAxisWidth={40}
-            valueFormatter={valueFormatter}
+            valueFormatter={usdValueFormatter}
             curveType="monotone"
             showAnimation={true}
+            enableLegendSlider={true}
             connectNulls={true} />
     </Card>;
 };
