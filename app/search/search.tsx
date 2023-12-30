@@ -3,182 +3,12 @@ import {
     InstantSearch, Hits, RefinementList, ToggleRefinement, CurrentRefinements,
     Pagination, Stats, HitsPerPage
 } from 'react-instantsearch';
-import kydefault from 'ky';
-// import 'instantsearch.css/themes/algolia.css';
 import { MenuSelect } from '../MenuList';
 import { RangeSlider } from '../RangeSlider';
 import { SearchClient } from 'algoliasearch';
-import { Hit, CustomHitType } from '../hit'
-import { query } from '../lib/db'
+import { Hit } from '../hit'
 import './search.css';
-
-
-//import 'instantsearch.css/themes/algolia.css';
-const ky = kydefault.extend({
-    //cache: 'force-cache',
-    //mode: 'no-cors',
-    retry: {
-        limit: 3,
-        delay: attemptCount => 0.3 * (2 ** (attemptCount - 1)) * 1000
-    }
-});
-const yearFacets = async () => {
-    const s = `SELECT RECEIVED_DATE_YEAR AS value, COUNT(1) AS count FROM 'db.parquet'
-                GROUP BY RECEIVED_DATE_YEAR
-                ORDER BY value`;
-    const data = await ky(`https://hpqdata.deno.dev/raw?q=${encodeURIComponent(s)}`).json<{ value: string; count: number; }[]>();
-    facetMaps['timeframe'] = data;
-    return data;
-}
-let facetMaps: Record<string, {
-    value: string;
-    count: number;
-}[]> = {};
-const parseFacetFilters = (facetFilters: [string[]]) => {
-    const v = facetFilters.map(j => j.map(x => `${x.split(':')[0]}='${x.split(':')[1]}'`).join(' OR ')).map(j => j && `(${j})`).join(' AND ')
-    return v ? `AND (${v})` : ''
-}
-
-const parseNumericFilters = (numericFilters: string[]) => {
-    const v = numericFilters.join(' and ');
-    return v ? `AND (${v})` : '';
-}
-
-const facetSearchMethod = async (requests: any, facetName: string) => {
-    //this is when you get from global search //requests.find(r=>r.params.facets == 'EMPLOYER_NAME')
-    //this is when that particular facet is being searched //requests.find(r=>r.params.facetName == 'EMPLOYER_NAME')
-    const facetRequest = requests.find((r: any) => r.params.facetName == facetName || r.params.facets == facetName);
-    let q = '';
-    let facetFilters: [string[]] = [[]];
-    let numericFilters: string[] = [];
-    if (facetRequest) {
-        facetFilters = facetRequest.params.facetFilters;
-        numericFilters = facetRequest.params.numericFilters;
-        q = facetRequest.params.facetQuery;
-    } else {
-        facetFilters = requests[0].params.facetFilters;
-        numericFilters = requests[0].params.numericFilters;
-    }
-
-    let numFilters = '', filter = '';
-    if (numericFilters && Array.isArray(numericFilters)) {
-        numFilters = parseNumericFilters(numericFilters);
-    }
-
-    if (facetFilters && Array.isArray(facetFilters)) {
-        filter = parseFacetFilters(facetFilters);
-    }
-
-    const facetQuery = q && `AND ${facetName} ILIKE '%${q}%'`
-    const s = `SELECT ${facetName} AS value, COUNT(1) AS count FROM 
-                (
-                    SELECT *
-                    FROM 'db.parquet'
-                    WHERE 1=1
-                    ${facetQuery || ''}
-                    ${numFilters}
-                    ${filter}
-                ) T1
-                GROUP BY ${facetName}
-                ORDER BY Count DESC
-                LIMIT 10`;
-
-    const data = await query<{ value: string, count: number }>(s);
-    return data || [];
-}
-
-const sc = {
-    async search(requests: any[]) {
-        const { params } = requests[0];
-
-        if (!params) throw new Error('invalid params');
-
-        let numericFilters = '';
-        if (params.numericFilters && Array.isArray(params.numericFilters)) {
-            numericFilters = parseNumericFilters(params.numericFilters);
-        }
-
-        let filter = ''
-        if (params.facetFilters && Array.isArray(params.facetFilters)) {
-            const f = params.facetFilters as [string[]];
-            filter = parseFacetFilters(f);
-        }
-
-        const perPage = params.hitsPerPage || 12;
-        const offset = (params.page || 0) * perPage;
-        const baseQuery = `SELECT JOB_TITLE AS jobTitle, EMPLOYER_NAME as employerName, 
-                            CASE_NUMBER AS objectID, RECEIVED_DATE_YEAR,
-                            WAGE_RATE_OF_PAY_FROM AS payRangeStart, 
-                            WAGE_RATE_OF_PAY_TO AS payRangeEnd, 
-                            CAST(RECEIVED_DATE AS DATE) AS receivedDate,
-                            WORKSITE_STATE AS worksiteState, WORKSITE_POSTAL_CODE as worksiteZip
-                            FROM 'db.parquet'
-                            WHERE 1=1
-                            ${numericFilters}
-                            ${filter}
-                            `;
-        const resultsQuery = `${baseQuery} 
-                                LIMIT ${perPage} OFFSET ${offset}`;
-        const countsQuery = `SELECT COUNT(1) counts FROM (
-                                ${baseQuery}
-                            ) T`
-
-        const resp = await query<CustomHitType>(resultsQuery);
-        const resp_counts = await query<{ counts: number }>(countsQuery);
-
-        const totalCount = resp_counts.pop()?.counts || 10;
-
-        const companyFacetMaps = await facetSearchMethod(requests, 'EMPLOYER_NAME');
-        const socTitleFacetMaps = await facetSearchMethod(requests, 'SOC_TITLE');
-        const worksiteStateFacetMaps = await facetSearchMethod(requests, 'WORKSITE_STATE');
-        const timeFrameFacetMaps = facetMaps['timeframe'] || await yearFacets();
-        //https://github.com/algolia/instantsearch/tree/master/packages/algoliasearch-helper#results-format
-        return {
-            results: [
-                {
-                    "facets": {
-                        "EMPLOYER_NAME": Object.assign({}, ...companyFacetMaps?.map(({ value, count }) => ({ [value]: count })) || [{}]),
-                        "SOC_TITLE": Object.assign({}, ...socTitleFacetMaps?.map(({ value, count }) => ({ [value]: count })) || [{}]),
-                        "WORKSITE_STATE": Object.assign({}, ...worksiteStateFacetMaps?.map(({ value, count }) => ({ [value]: count })) || [{}]),
-                        "RECEIVED_DATE_YEAR": Object.assign({}, ...timeFrameFacetMaps?.map(({ value, count }) => ({ [value]: count })) || [{}])
-                    },
-                    "hits": resp,
-                    "page": 0,
-                    "nbHits": totalCount,
-                    "nbPages": Math.ceil((totalCount / perPage)),
-                    "hitsPerPage": perPage,
-                    "processingTimeMS": 1
-                }
-            ]
-        }
-    },
-    async searchForFacetValues(requests: any) {
-        const { facetName } = requests[0].params;
-        let data: { value: string, count: number }[] = [];
-
-        switch (facetName) {
-            case 'EMPLOYER_NAME':
-            case 'SOC_TITLE':
-            case 'WORKSITE_STATE':
-                data = await facetSearchMethod(requests, facetName);
-                break;
-            case 'RECEIVED_DATE_YEAR':
-                data = await yearFacets()
-                break;
-            default:
-                throw new Error('invalid facet name');
-        }
-
-        return {
-            "facetHits": data.map(({ value, count }) => ({ value, count, highlighted: `${value}` })),
-            "exhaustiveFacetsCount": true,
-            "exhaustive": {
-                "facetsCount": true
-            },
-            "processingTimeMS": 1
-        }
-    }
-};
+import { sc } from './searchClient';
 
 export const Search = () => {
     return <InstantSearch searchClient={sc as unknown as SearchClient} indexName="YourIndexName">
@@ -230,10 +60,7 @@ export const Search = () => {
                             showMore={true}
                             showMoreLimit={25}
                             limit={5}
-                            searchablePlaceholder='Search company...'
-                            classNames={{
-
-                            }} />
+                            searchablePlaceholder='Search company...' />
                         <RefinementList attribute="SOC_TITLE"
                             searchable={true}
                             showMore={true}

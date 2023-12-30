@@ -9,11 +9,18 @@ const ky = kydefault.extend({
     }
 });
 
-export const query = async <T>(q: string) =>
-    ky(`https://hpqdata.deno.dev/raw?q=${encodeURIComponent(q)}`).json<T[]>();
+export const query = async <T>(q: string, options?: { signal: AbortSignal | undefined | null }) =>
+    ky(`https://hpqdata.deno.dev/raw?q=${encodeURIComponent(q)}`, options).json<T[]>();
+
+export const queryFirst = async <T>(q: string, options?: { signal: AbortSignal | undefined | null }) => {
+    const result = await ky(`https://hpqdata.deno.dev/raw?q=${encodeURIComponent(q)}`, options).json<T[]>();
+    if (result.length >= 1) return result[0];
+    throw new Error(`empty array received.`);
+}
+
 
 const fetcher = async <T>(q: string) =>
-ky(`https://hpqdata.deno.dev/raw?q=${encodeURIComponent(q)}`).json<T[]>();
+    ky(`https://hpqdata.deno.dev/raw?q=${encodeURIComponent(q)}`).json<T[]>();
 
 export const useDbQuery = <T>(q: string) => {
     const { data, error, isLoading } = useSWR<T[]>(q, fetcher);
