@@ -129,7 +129,8 @@ const searchMainMethod = async (requests: any[]) => {
     }
 }
 
-let lastKnownResult:any;
+let lastKnownResult: any;
+let lastKnowFacetResultMap = new Map<string, any>();
 export const sc = {
     async search(requests: any[]) {
         try {
@@ -140,25 +141,30 @@ export const sc = {
     },
     async searchForFacetValues(requests: any) {
         const { facetName } = requests[0].params;
-        facetSearchSignalMap.get(facetName)?.abort();
-        const ac = new AbortController();
-        facetSearchSignalMap.set(facetName, ac);
-        switch (facetName) {
-            case 'EMPLOYER_NAME':
-            case 'SOC_TITLE':
-            case 'WORKSITE_STATE':
-            case 'RECEIVED_DATE_YEAR':
-                const { data } = await facetSearchMethod(requests, facetName, ac.signal);
-                return {
-                    "facetHits": data.map(({ value, count }) => ({ value, count, highlighted: `${value}` })),
-                    "exhaustiveFacetsCount": true,
-                    "exhaustive": {
-                        "facetsCount": true
-                    },
-                    "processingTimeMS": 1
-                }
-            default:
-                throw new Error('invalid facet name');
-        }
+        try {
+            facetSearchSignalMap.get(facetName)?.abort();
+            const ac = new AbortController();
+            facetSearchSignalMap.set(facetName, ac);
+            switch (facetName) {
+                case 'EMPLOYER_NAME':
+                case 'SOC_TITLE':
+                case 'WORKSITE_STATE':
+                case 'RECEIVED_DATE_YEAR':
+                    const { data } = await facetSearchMethod(requests, facetName, ac.signal);
+                    lastKnowFacetResultMap.set(facetName, {
+                        "facetHits": data.map(({ value, count }) => ({ value, count, highlighted: `${value}` })),
+                        "exhaustiveFacetsCount": true,
+                        "exhaustive": {
+                            "facetsCount": true
+                        },
+                        "processingTimeMS": 1
+                    });
+                default:
+                    throw new Error('invalid facet name');
+            }
+        } catch (error) {
+
+        }        
+        return lastKnowFacetResultMap.get(facetName);
     }
 };
