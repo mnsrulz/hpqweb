@@ -11,7 +11,15 @@ import './search.css';
 import { sc } from './searchClient';
 
 export const Search = () => {
-    return <InstantSearch searchClient={sc as unknown as SearchClient} indexName="YourIndexName">
+    let initialUiState = {
+        'ix': {
+            // query: 'stick',
+            menu: {
+                RECEIVED_DATE_YEAR: '2023'
+            }
+        }
+    };
+    return <InstantSearch searchClient={sc as unknown as SearchClient} indexName="ix" routing={true} initialUiState={initialUiState} >
         <div className='flex flex-no-wrap'>
             <div className="search-panel__filters w-80 absolute sm:relative bg-white-800 shadow md:h-full flex-col justify-between hidden sm:flex">
                 {/* <button aria-label="toggle sidebar" id="openSideBar" className="h-10 w-10 bg-gray-800 absolute right-0 mt-0 -mr-10 flex items-center shadow rounded-tr rounded-br justify-center cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 rounded focus:ring-gray-800" onClick={()=>{
