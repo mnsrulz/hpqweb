@@ -8,7 +8,7 @@ import {
     TabPanels,
 } from "@tremor/react";
 import { useState } from "react";
-import { query } from '../lib/db'
+import { query } from '../lib/socket'
 import { RawDataTable } from "./rawDataTable";
 const defaultQuery = `SELECT * FROM 'db.parquet'
 LIMIT 10`;

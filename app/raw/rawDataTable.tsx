@@ -16,8 +16,8 @@ export const RawDataTable = ({ data }: { data: any[] }) => {
             </TableRow>
         </TableHead>
         <TableBody>
-            {data.map((item) => (
-                <TableRow key={item}>
+            {data.map((item, ix) => (
+                <TableRow key={ix}>
                     {Object.keys(item).map(h => (<TableCell key={h}>{isObject(item[h]) ? JSON.stringify(item[h]): item[h]}</TableCell>))}
                 </TableRow>
             ))}

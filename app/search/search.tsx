@@ -19,6 +19,7 @@ export const Search = () => {
             }
         }
     };
+    
     return <InstantSearch searchClient={sc as unknown as SearchClient} indexName="ix" routing={true} initialUiState={initialUiState} >
         <div className='flex flex-no-wrap'>
             <div className="search-panel__filters w-80 absolute sm:relative bg-white-800 shadow md:h-full flex-col justify-between hidden sm:flex">

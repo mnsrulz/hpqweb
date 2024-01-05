@@ -1,5 +1,5 @@
 import { CustomHitType } from "../hit";
-import { query, queryFirst } from "../lib/db";
+import { query, queryFirst } from './../lib/socket'
 
 let scSignal: AbortController | null;
 let facetSearchSignalMap = new Map<string, AbortController>();
@@ -65,6 +65,7 @@ const facetSearchMethod = async (requests: any, facetName: string, signal: Abort
 }
 
 const searchMainMethod = async (requests: any[]) => {
+    const p1 = performance.now();
     scSignal?.abort();
     const currentController = new AbortController();
     const { signal } = currentController;
@@ -77,20 +78,20 @@ const searchMainMethod = async (requests: any[]) => {
     const perPage = params.hitsPerPage || 12;
     const offset = (params.page || 0) * perPage;
     const baseQuery = `SELECT JOB_TITLE AS jobTitle, EMPLOYER_NAME as employerName, 
-                            CASE_NUMBER AS objectID, RECEIVED_DATE_YEAR,
-                            WAGE_RATE_OF_PAY_FROM AS payRangeStart, 
-                            WAGE_RATE_OF_PAY_TO AS payRangeEnd, 
-                            CAST(RECEIVED_DATE AS DATE) AS receivedDate,
-                            WORKSITE_STATE AS worksiteState, WORKSITE_POSTAL_CODE as worksiteZip
-                            FROM 'db.parquet'
-                            WHERE 1=1
-                            ${filter}
-                            `;
+    CASE_NUMBER AS objectID, RECEIVED_DATE_YEAR,
+    WAGE_RATE_OF_PAY_FROM AS payRangeStart, 
+    WAGE_RATE_OF_PAY_TO AS payRangeEnd, 
+    CAST(RECEIVED_DATE AS DATE) AS receivedDate,
+    WORKSITE_STATE AS worksiteState, WORKSITE_POSTAL_CODE as worksiteZip
+    FROM 'db.parquet'
+    WHERE 1=1
+    ${filter}
+    `;
     const resultsQuery = `${baseQuery} 
-                                LIMIT ${perPage} OFFSET ${offset}`;
+    LIMIT ${perPage} OFFSET ${offset}`;
     const countsQuery = `SELECT COUNT(1) counts FROM (
-                                ${baseQuery}
-                            ) T`
+        ${baseQuery}
+        ) T`
 
     const [resultsPromise, countsPromise] = [
         query<CustomHitType>(resultsQuery, { signal }),
@@ -113,6 +114,7 @@ const searchMainMethod = async (requests: any[]) => {
         [facetName]: Object.assign({}, ...data?.map(({ value, count }) => ({ [value]: count })) || [{}])
     })));
 
+    const p2 = performance.now();
     //https://github.com/algolia/instantsearch/tree/master/packages/algoliasearch-helper#results-format
     return {
         results: [
@@ -123,7 +125,7 @@ const searchMainMethod = async (requests: any[]) => {
                 "nbHits": counts,
                 "nbPages": Math.ceil((counts / perPage)),
                 "hitsPerPage": perPage,
-                "processingTimeMS": 1
+                "processingTimeMS": p2 - p1
             }
         ]
     }
@@ -164,7 +166,7 @@ export const sc = {
             }
         } catch (error) {
 
-        }        
+        }
         return lastKnowFacetResultMap.get(facetName);
     }
 };
