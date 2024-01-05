@@ -7,7 +7,7 @@ const URL = `https://hpqdata-socket-deno.deno.dev`
 
 export const socket = io(URL, {
     reconnectionDelayMax: 10000,
-    transports: ['websocket']
+    // transports: ['websocket']
 });
 
 socket.on("connect", () => {
