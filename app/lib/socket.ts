@@ -23,20 +23,22 @@ export const query = async <T>(q: string, options?: { signal: AbortSignal | unde
             q,
             requestId
         }
+        const handler = (args: { result: any }) => {
+            res(args.result)
+        }
         //queryResults.value.push(objecToSend)
         socket.emit('query', objecToSend);
 
         options?.signal?.addEventListener('abort', () => {
             console.log(`cancelling the request: ${requestId}`)
+            socket.off(`query-response-${requestId}`, handler);
             socket.emit('cancelQuery', {
                 requestId
             });
-        })
-
-        socket.once(`query-response-${requestId}`, (args) => {
-            //debugger;
-            res(args.result)
+            rej('abort requested!');
         });
+
+        socket.once(`query-response-${requestId}`, handler);
     })
 }
 //ky(`https://hpqdata.deno.dev/raw?q=${encodeURIComponent(q)}`, options).json<T[]>();
