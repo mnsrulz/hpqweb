@@ -1,12 +1,16 @@
+'use client'
 import { io } from 'socket.io-client';
 
 // "undefined" means the URL will be computed from the `window.location` object
 // const URL = process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:4000';
 
 const URL = `https://hpqdata-socket-deno.deno.dev`
+//wss://hpqdata-socket-deno.deno.dev/socket.io/?EIO=4&transport=websocket&sid=GZttc54eTpkxEajiH_tH
+//wss://hpqdata-socket-deno.deno.dev/socket.io/?EIO=4&transport=websocket
 
 export const socket = io(URL, {
     reconnectionDelayMax: 10000,
+    transports: ['websocket', 'polling']
     // transports: ['websocket']
 });
 

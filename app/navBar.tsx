@@ -12,9 +12,14 @@ const RouterLink = ({ href, children }: { href: string, children: any }) => {
     return <Navbar.Link as={Link} href={href} active={active}>{children}</Navbar.Link>
 }
 
+const ConnectionStatus = (props: { isConnected: boolean, transportName: string }) => {
+    const { isConnected, transportName } = props;
+    return <span className='mx-1'>| Connected: <span>{transportName}</span> -- {isConnected ? 'true' : 'false'}</span>
+}
+
 export const AppNavBar = () => {
     const [isConnected, setIsConnected] = useState(socket.connected);
-    
+    const [transport, setTransport] = useState(socket.io.engine.transport.name);
     useEffect(() => {
         function onConnect() {
             setIsConnected(true);
@@ -24,8 +29,14 @@ export const AppNavBar = () => {
             setIsConnected(false);
         }
 
+        const onUpgrade = () => {
+            console.log(`upgraded to ${socket.io.engine.transport.name}`)
+            setTransport(socket.io.engine.transport.name);
+        }
+
         socket.on('connect', onConnect);
         socket.on('disconnect', onDisconnect);
+        socket.on('upgrade', onUpgrade)
 
         return () => {
             socket.off('connect', onConnect);
@@ -40,6 +51,6 @@ export const AppNavBar = () => {
             <RouterLink href='/dashboard'>Dashboard</RouterLink>
             <RouterLink href='/raw'>Raw</RouterLink>
         </Navbar.Collapse>
-        <span className='mx-1'>| Connected: { isConnected ? 'true' : 'false' }</span> 
+        <ConnectionStatus isConnected={isConnected} transportName={transport} />
     </Navbar>
 }

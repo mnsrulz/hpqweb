@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@algolia/client-search": "^4.22.0",
+    "@internationalized/number": "^3.5.0",
     "@radix-ui/react-slider": "^1.1.2",
     "@tremor/react": "^3.12.1",
     "algoliasearch": "^4.22.0",
@@ -22,8 +23,8 @@
     "react": "^18",
     "react-dom": "^18",
     "react-instantsearch": "^7.5.0",
-    "swr": "^2.2.4",
-    "socket.io-client": "^4.7.3"
+    "socket.io-client": "^4.7.3",
+    "swr": "^2.2.4"
   },
   "devDependencies": {
     "@types/node": "^20",

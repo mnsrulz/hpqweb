@@ -9,7 +9,10 @@ export type CustomHitType = { jobTitle: string,
     payRangeEnd?: number
 }
 
-const numberFormatter = new Intl.NumberFormat('en', {
+// import { NumberFormat } from '@formatjs/intl-numberformat'
+import { NumberFormatter } from '@internationalized/number'
+
+const numberFormatter = new NumberFormatter('en', {
     notation: 'compact',
     style: "currency",
     currency: 'USD'
