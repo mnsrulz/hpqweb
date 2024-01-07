@@ -6,7 +6,7 @@ import {
 import { MenuSelect } from '../MenuList';
 import { RangeSlider } from '../RangeSlider';
 import { SearchClient } from 'algoliasearch';
-import { Hit } from '../hit'
+import { Hit } from './hit'
 import './search.css';
 import { sc } from './searchClient';
 import { Button, Modal, Select } from 'flowbite-react';
