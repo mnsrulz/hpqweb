@@ -79,7 +79,7 @@ export const Search = () => {
                                 <MdOutlineClear className="h-4 w-4"/>
                             </Button>
                         </div>
-                        <div className='px-4 py-2 overflow-y-auto overflow-x-hidden inset-0 h-full'>
+                        <div className='px-4 py-2 overflow-y-auto overflow-x-hidden inset-0 h-400'>
                             {fm}
                         </div>
                     </div>
