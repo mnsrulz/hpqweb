@@ -1,4 +1,4 @@
-import { CustomHitType } from "../hit";
+import { CustomHitType } from "./hit";
 import { query, queryFirst } from './../lib/socket'
 
 let scSignal: AbortController | null;
