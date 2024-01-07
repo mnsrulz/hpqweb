@@ -72,7 +72,7 @@ export const Search = () => {
             </div>
             <div className={shouldShowFilterMenu ? 'flex sm:hidden' : 'hidden'}>
                 <div className="fixed top-0 right-0 left-0 z-50 h-modal h-screen items-center justify-center flex bg-gray-900 bg-opacity-50 dark:bg-opacity-80">
-                    <div className='overflow-auto relative bg-white shadow dark:bg-gray-700 flex flex-col max-h-[90vh]'>
+                    <div className='overflow-auto relative bg-white shadow dark:bg-gray-700 flex flex-col max-h-[80vh]'>
                         <div className="mb-2 items-start justify-between rounded-t dark:border-gray-600 border-b flex p-4">
                             <h3 id=":r10:" className="text-xl font-medium text-gray-900 dark:text-white">Filters</h3>
                             <Button aria-label="Close" size="xs" onClick={closeFilterMenu} className="ml-auto bg-transparent text-sm text-gray-400 hover:bg-gray-200 hover:text-gray-900" type="button">
