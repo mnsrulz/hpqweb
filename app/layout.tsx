@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 // import 'instantsearch.css/themes/algolia.css';
 import './globals.css'
 import { AppNavBar } from './navBar'
+import React from 'react'
 
 const inter = Inter({ subsets: ['latin'] })
 

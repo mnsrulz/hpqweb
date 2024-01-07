@@ -1,10 +1,15 @@
 'use client'
 
+
+import { Sidebar } from 'flowbite-react';
+import { HiArrowSmRight, HiChartPie, HiInbox, HiShoppingBag, HiTable, HiUser, HiViewBoards } from 'react-icons/hi';
+
 import { Navbar } from 'flowbite-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { socket } from './lib/socket'
+import React from 'react';
 
 const RouterLink = ({ href, children }: { href: string, children: any }) => {
     const routerPath = usePathname();
@@ -43,14 +48,15 @@ export const AppNavBar = () => {
             socket.off('disconnect', onDisconnect);
         };
     }, []);
+
     return <Navbar fluid>
-        <Navbar.Toggle />
-        <Navbar.Collapse>
-            <RouterLink href='/'>Home</RouterLink>
-            <RouterLink href='/search'>Search</RouterLink>
-            <RouterLink href='/dashboard'>Dashboard</RouterLink>
-            <RouterLink href='/raw'>Raw</RouterLink>
-        </Navbar.Collapse>
-        <ConnectionStatus isConnected={isConnected} transportName={transport} />
-    </Navbar>
+            <Navbar.Toggle />
+            <Navbar.Collapse>
+                <RouterLink href='/'>Home</RouterLink>
+                <RouterLink href='/search'>Search</RouterLink>
+                <RouterLink href='/dashboard'>Dashboard</RouterLink>
+                <RouterLink href='/raw'>Raw</RouterLink>
+            </Navbar.Collapse>
+            <ConnectionStatus isConnected={isConnected} transportName={transport} />
+        </Navbar>
 }

@@ -3,6 +3,7 @@ import { Card, Title, LineChart } from "@tremor/react";
 import { useDbQuery } from '../lib/db';
 import { BaseParam, usdValueFormatter } from "./common";
 import dayjs from "dayjs";
+import React from "react";
 
 
 
@@ -37,7 +38,7 @@ export const AvgSalaryByState = ({range}: BaseParam) => {
             const pitem = o[item.dt];
             pitem[item.name] = item.avg_start;
         }
-        uniqueAttributes = [...new Set(data.map(j => j.name))]; //data.map(j => j.name).filter((x, i, a) => a.indexOf(x) == i);
+        uniqueAttributes = Array.from(new Set(data.map(j => j.name))); //data.map(j => j.name).filter((x, i, a) => a.indexOf(x) == i);
         finalData = Object.values(o);
     }
 

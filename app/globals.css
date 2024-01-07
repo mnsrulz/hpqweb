@@ -19,6 +19,7 @@
 body {
   color: rgb(var(--foreground-rgb));
   background-color: rgb(249 250 251/var(--tw-bg-opacity));
+  margin-bottom: 1rem;
 }
 
 
@@ -98,3 +99,7 @@ body {
 .ais-RefinementList {
   margin-bottom: 2rem;
 } */
+
+main {
+  @apply flex
+}
