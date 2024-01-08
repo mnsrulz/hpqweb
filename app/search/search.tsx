@@ -70,22 +70,20 @@ export const Search = () => {
                     </div>
                 </div>
             </div>
-            <div className={shouldShowFilterMenu ? 'flex sm:hidden' : 'hidden'}>
-                <div className="fixed top-0 right-0 left-0 z-50 h-modal h-screen items-center justify-center flex bg-gray-900 bg-opacity-50 dark:bg-opacity-80">
-                    <div className='overflow-auto relative bg-white shadow dark:bg-gray-700 flex flex-col h-dvh'>
-                        <div className="mb-2 items-start justify-between rounded-t dark:border-gray-600 border-b flex p-4">
-                            <h3 id=":r10:" className="text-xl font-medium text-gray-900 dark:text-white">Filters</h3>
-                            <Button aria-label="Close" size="xs" onClick={closeFilterMenu} className="ml-auto bg-transparent text-sm text-gray-400 hover:bg-gray-200 hover:text-gray-900" type="button">
-                                <MdOutlineClear className="h-4 w-4"/>
-                            </Button>
-                        </div>
-                        <div className='px-4 py-2 overflow-y-auto overflow-x-hidden inset-0 h-400'>
-                            {fm}
-                        </div>
-                        {/* Modal footer */}
-                        <div className="flex justify-end p-4 md:p-5 border-t border-gray-200 rounded-b dark:border-gray-600">
-                            <button data-modal-hide="static-modal" onClick={closeFilterMenu} type="button" className=" text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Ok</button>
-                        </div>
+            <div className={shouldShowFilterMenu ? 'sm:hidden' : 'hidden'}>
+                <div className="fixed top-0 right-0 left-0 z-50 flex flex-col bg-white dark:bg-gray-700 w-screen h-dvh">
+                    <div className="mb-2 items-start justify-between rounded-t dark:border-gray-600 border-b flex p-4">
+                        <h3 id=":r10:" className="text-xl font-medium text-gray-900 dark:text-white">Filters</h3>
+                        <Button aria-label="Close" size="xs" onClick={closeFilterMenu} className="ml-auto bg-transparent text-sm text-gray-400 hover:bg-gray-200 hover:text-gray-900" type="button">
+                            <MdOutlineClear className="h-4 w-4"/>
+                        </Button>
+                    </div>
+                    <div className='px-4 py-2 overflow-y-auto overflow-x-hidden inset-0 h-400'>
+                        {fm}
+                    </div>
+                    {/* Modal footer */}
+                    <div className="flex justify-end p-4 md:p-5 border-t border-gray-200 rounded-b dark:border-gray-600">
+                        <button data-modal-hide="static-modal" onClick={closeFilterMenu} type="button" className=" text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Ok</button>
                     </div>
                 </div>
             </div>
