@@ -33,7 +33,7 @@ const compactCardTheme: CustomFlowbiteTheme['card'] = {
     }
 };
 
-return <Card theme={compactCardTheme} className="max-w-sm ">
+return <Card theme={compactCardTheme} className="max-w-sm " key={hit.objectID}>
      <div className="min-w-0 flex-1">
         <p title={hit.employerName} className="truncate text-sm font-medium text-gray-900 dark:text-white">{hit.employerName}</p>
         <p title={hit.jobTitle} className="truncate text-sm text-gray-500 dark:text-gray-400">{hit.jobTitle}</p>
