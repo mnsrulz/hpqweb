@@ -2,6 +2,9 @@ import React from "react";
 import dayjs from "dayjs";
 import { Card, CustomFlowbiteTheme } from 'flowbite-react';
 
+import utc from 'dayjs/plugin/utc';
+dayjs.extend(utc);
+
 export type CustomHitType = { jobTitle: string, 
     employerName: string, 
     objectID: string, 
@@ -39,7 +42,7 @@ return <Card theme={compactCardTheme} className="max-w-sm ">
         </p>
         <div className='flex justify-between truncate text-sm text-gray-400 dark:text-gray-400'>
             <div>{hit.worksiteState} {hit.worksiteZip}</div>
-            <div className='flex'>{dayjs(hit.receivedDate).format("d MMM YY")}</div>
+            <div className='flex'>{dayjs.utc(hit.receivedDate).format('D MMM YY')}</div>
         </div>
     </div>
     </Card>
