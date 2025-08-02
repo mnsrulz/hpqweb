@@ -51,7 +51,7 @@ const initialUiState = {
     'ix': {
         // query: 'stick',
         menu: {
-            RECEIVED_DATE_YEAR: '2023'
+            RECEIVED_DATE_YEAR: '2025'
         }
     }
 };
